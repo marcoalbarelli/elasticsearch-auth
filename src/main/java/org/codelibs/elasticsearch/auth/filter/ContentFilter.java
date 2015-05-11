@@ -1,18 +1,30 @@
 package org.codelibs.elasticsearch.auth.filter;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
+import org.apache.lucene.search.Query;
+import org.apache.lucene.util.BytesRef;
 import org.codelibs.elasticsearch.auth.security.LoginConstraint;
 import org.codelibs.elasticsearch.auth.service.AuthService;
 import org.codelibs.elasticsearch.auth.util.ResponseUtil;
 import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.common.bytes.BytesArray;
+import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
-import org.elasticsearch.rest.RestChannel;
-import org.elasticsearch.rest.RestFilter;
-import org.elasticsearch.rest.RestFilterChain;
-import org.elasticsearch.rest.RestRequest;
-import org.elasticsearch.rest.RestStatus;
+import org.elasticsearch.common.netty.buffer.ChannelBuffer;
+import org.elasticsearch.common.netty.channel.Channel;
+import org.elasticsearch.http.HttpRequest;
+import org.elasticsearch.http.netty.NettyHttpRequest;
+import org.elasticsearch.index.query.QueryParseContext;
+import org.elasticsearch.index.query.QueryParser;
+import org.elasticsearch.index.query.QueryParsingException;
+import org.elasticsearch.rest.*;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.channels.GatheringByteChannel;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ContentFilter extends RestFilter {
     private static final ESLogger logger = Loggers
@@ -31,6 +43,23 @@ public class ContentFilter extends RestFilter {
     @Override
     public void process(final RestRequest request, final RestChannel channel,
             final RestFilterChain filterChain) {
+
+        try {
+
+
+            final String decoded = new String(request.content().toBytes(), "UTF-8");
+            String lines[] = decoded.split("\\r?\\n");
+            logger.error("On path " + request.uri() + " "+lines.length+" queries: ");
+
+            for (String line : lines) {
+                logger.error(line);
+            }
+
+
+
+        } catch(IOException ioe){
+            logger.error(ioe.getMessage());
+        }
         if (constraints == null) {
             init(request, channel, filterChain);
         } else {
